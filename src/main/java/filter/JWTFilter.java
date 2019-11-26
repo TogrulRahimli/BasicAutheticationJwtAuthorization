@@ -3,6 +3,7 @@ package filter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import model.RestErrorResponse;
+import model.User;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.lang3.StringUtils;
 import util.JwtTokenProvider;
@@ -41,6 +42,10 @@ public class JWTFilter implements Filter {
                 returnError(HttpStatus.SC_UNAUTHORIZED, 401, "Unauthorized", servletResponse);
                 return;
             }
+
+            User user = tokenProvider.parseJwtToken(jwt);
+
+            servletRequest.setAttribute("user", user);
         }
         filterChain.doFilter(servletRequest, servletResponse);
     }

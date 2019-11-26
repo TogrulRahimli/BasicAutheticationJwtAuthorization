@@ -1,21 +1,28 @@
 package controller;
 
-import exception.AuthException;
 import model.LoginRequest;
-import model.RestErrorResponse;
+import model.RefreshRequest;
+import model.User;
 import repository.DatabaseInfo;
 import service.LoginService;
-import util.Constants;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import java.util.Base64;
 
 @Path("/login")
 public class LoginController {
 
-    private DatabaseInfo databaseInfo = new DatabaseInfo();
-    private LoginService loginService = new LoginService(databaseInfo);
+    private LoginService loginService;
+
+    @Context
+    private HttpServletRequest request;
+
+    public LoginController() {
+        DatabaseInfo databaseInfo = new DatabaseInfo();
+        loginService = new LoginService(databaseInfo);
+    }
 
     @Path("/auth")
     @POST
@@ -24,6 +31,15 @@ public class LoginController {
     public Object login(LoginRequest loginRequest,
                         @HeaderParam("Authentication") String authString) {
         return loginService.login(loginRequest.getUsername(), loginRequest.getPassword(), authString);
+    }
+
+    @Path("/refresh")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Object refresh(RefreshRequest refreshRequest) {
+        User currentUser = (User) request.getAttribute("user");
+        return loginService.refresh(currentUser, refreshRequest.getRefreshToken());
     }
 
 }

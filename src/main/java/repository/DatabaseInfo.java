@@ -21,4 +21,8 @@ public class DatabaseInfo {
                 .filter(user -> user.getPassword().equals(password))
                 .findFirst().orElse(null);
     }
+
+    public List<User> getUsers() {
+        return users;
+    }
 }

@@ -8,7 +8,6 @@ import model.TokenPair;
 import model.TokenType;
 import model.User;
 
-import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
@@ -20,7 +19,7 @@ public class JwtTokenProvider {
     private static final String TOKEN_TYPE_KEY = "token_type";
 
     private static String SECRET_KEY = "hojjrbj6ln5mdnzeh9fikrfbamcy33puuwh3f8190jmf9vbv0ek2vym6tf74zjg0npj7d31xm6mzz7e6sv8bpvmjdcjoc2z0k8uzk02j03jfjl5scsgivh3p5yt9sa6k";
-    private static final long ACCESS_TOKEN_VALIDITY_IN_SECONDS = 180;
+    private static final long ACCESS_TOKEN_VALIDITY_IN_SECONDS = 900;
     private static final long REFRESH_TOKEN_VALIDITY_IN_SECONDS = 120;
 
     private Key key;
@@ -59,35 +58,22 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-//    public static String createJWT(User user) {
-//        long nowMillis = System.currentTimeMillis();
-//        Date now = new Date(nowMillis);
-//
-//        byte[] keyBytes = SECRET_KEY.getBytes(StandardCharsets.UTF_8);
-//
-//        Key signingKey = Keys.hmacShaKeyFor(keyBytes);
-//
-//        //Let's set the JWT Claims
-//        JwtBuilder builder = Jwts.builder()
-//                .setId(String.valueOf(user.getId()))
-//                .setIssuedAt(now)
-//                .setSubject(user.getUsername())
-//                .setIssuer(user.getName())
-//                .signWith(signingKey, SignatureAlgorithm.HS512);
-//
-//        //if it has been specified, let's add the expiration
-//        long expMillis = nowMillis + EXPIRY_MILLIS * 1000;
-//        Date exp = new Date(expMillis);
-//        builder.setExpiration(exp);
-//
-//        return builder.compact();
-//    }
-
-    public static Claims decodeJWT(String jwt) {
-        return Jwts.parser()
-                .setSigningKey(DatatypeConverter.parseBase64Binary(SECRET_KEY))
-                .parseClaimsJws(jwt)
+    public User parseJwtToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(key)
+                .parseClaimsJws(token)
                 .getBody();
+
+        int userId = Integer.parseInt(String.valueOf(claims.get(AUTHOR_ID)));
+
+        User user = new User();
+        user.setId(userId);
+
+        if (claims.get(TOKEN_TYPE_KEY).equals(TokenType.ACCESS.name())) {
+            user.setName(claims.get(FULLNAME).toString());
+            user.setUsername(claims.getSubject());
+        }
+        return user;
     }
 
     public TokenPair createTokenPair(User user) {
@@ -98,6 +84,6 @@ public class JwtTokenProvider {
     }
 
     public void validateToken(String authToken) {
-        Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(authToken);
+        Jwts.parser().setSigningKey(key).parseClaimsJws(authToken);
     }
 }

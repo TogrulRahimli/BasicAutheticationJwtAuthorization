@@ -1,8 +1,8 @@
 package service;
 
 import exception.AuthException;
+import io.jsonwebtoken.ExpiredJwtException;
 import model.RestErrorResponse;
-import model.TokenPair;
 import model.User;
 import repository.DatabaseInfo;
 import util.Constants;
@@ -13,10 +13,11 @@ import java.util.Base64;
 public class LoginService {
 
     private DatabaseInfo databaseInfo;
-    private JwtTokenProvider tokenProvider = new JwtTokenProvider();
+    private JwtTokenProvider tokenProvider;
 
     public LoginService(DatabaseInfo databaseInfo) {
         this.databaseInfo = databaseInfo;
+        tokenProvider = new JwtTokenProvider();
     }
 
     public Object login(String username, String password, String authString) {
@@ -48,4 +49,15 @@ public class LoginService {
         }
     }
 
+    public Object refresh(User currentUser, String refreshToken) {
+        try {
+            tokenProvider.validateToken(refreshToken);
+        } catch (ExpiredJwtException e) {
+            return new RestErrorResponse(408, "Refresh token Expired");
+        } catch (Exception e) {
+            return new RestErrorResponse(401, "Unauthorized");
+        }
+
+        return tokenProvider.createTokenPair(currentUser);
+    }
 }
