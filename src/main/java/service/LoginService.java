@@ -2,14 +2,18 @@ package service;
 
 import exception.AuthException;
 import model.RestErrorResponse;
+import model.TokenPair;
+import model.User;
 import repository.DatabaseInfo;
 import util.Constants;
+import util.JwtTokenProvider;
 
 import java.util.Base64;
 
 public class LoginService {
 
     private DatabaseInfo databaseInfo;
+    private JwtTokenProvider tokenProvider = new JwtTokenProvider();
 
     public LoginService(DatabaseInfo databaseInfo) {
         this.databaseInfo = databaseInfo;
@@ -20,7 +24,10 @@ public class LoginService {
             if (!isUserAuthenticated(authString)) {
                 throw new AuthException(401, "Unauthorized");
             }
-            return databaseInfo.authUser(username, password);
+
+            User user = databaseInfo.authUser(username, password);
+
+            return tokenProvider.createTokenPair(user);
         } catch (AuthException ux) {
             return new RestErrorResponse(ux.getErrorCode(), ux.getErrorMessage());
         }
@@ -34,14 +41,11 @@ public class LoginService {
             if (credentials.length != 2) {
                 throw new AuthException(402, Constants.BASIC_AUTH + " not found");
             }
-            if (credentials[0].equals(Constants.BASIC_AUTH_USER) &&
-                    credentials[1].equals(Constants.BASIC_AUTH_PATH)) {
-                return true;
-            }
+            return credentials[0].equals(Constants.BASIC_AUTH_USER) &&
+                    credentials[1].equals(Constants.BASIC_AUTH_PATH);
         } else {
             throw new AuthException(402, Constants.BASIC_AUTH + " not found");
         }
-        return false;
     }
 
 }
