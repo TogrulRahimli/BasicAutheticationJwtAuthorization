@@ -29,7 +29,7 @@ public class LoginController {
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Object login(LoginRequest loginRequest,
-                        @HeaderParam("Authentication") String authString) {
+                        @HeaderParam("Authorization") String authString) {
         return loginService.login(loginRequest.getUsername(), loginRequest.getPassword(), authString);
     }
 
